@@ -1,28 +1,102 @@
-
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import './App.css'
 import Auth from './pages/Auth'
+import ListingBoard from './pages/ListingBoard'
+import VolunteerDashboard from './pages/VolunteerDashboard'
+import ShelterDashboard from './pages/ShelterDashboard'
+import GeospatialMatching from './pages/GeospatialMatching'
 
 function App() {
   const [authMode, setAuthMode] = useState(null)
 
-  // Show Login or Register page
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      return JSON.parse(window.localStorage.getItem('perishlink.user') || 'null')
+    } catch {
+      return null
+    }
+  })
+
+  const [dashboard, setDashboard] = useState('donor')
+
+  const signOut = useCallback(() => {
+    window.localStorage.removeItem('perishlink.token')
+    window.localStorage.removeItem('perishlink.user')
+    setCurrentUser(null)
+    setDashboard('donor')
+  }, [])
+
+  const expireSession = useCallback(() => {
+    signOut()
+    setAuthMode('login')
+  }, [signOut])
+
+  if (currentUser) {
+    return (
+      <div>
+        <nav className="navbar">
+          <a href="#home" className="logo">🌱 PerishLink</a>
+
+          <div className="nav-buttons">
+            <button onClick={() => setDashboard('donor')}>
+              Donor
+            </button>
+
+            <button onClick={() => setDashboard('volunteer')}>
+              Volunteer
+            </button>
+
+            <button onClick={() => setDashboard('shelter')}>
+              Shelter
+            </button>
+
+            <button onClick={() => setDashboard('matching')}>
+              Geospatial Matching
+            </button>
+
+            <button onClick={signOut}>
+              Logout
+            </button>
+          </div>
+        </nav>
+
+        {dashboard === 'donor' && (
+          <ListingBoard
+            user={currentUser}
+            onSignOut={signOut}
+            onSessionExpired={expireSession}
+          />
+        )}
+
+        {dashboard === 'volunteer' && (
+          <VolunteerDashboard />
+        )}
+
+        {dashboard === 'shelter' && (
+          <ShelterDashboard />
+        )}
+
+        {dashboard === 'matching' && (
+          <GeospatialMatching />
+        )}
+      </div>
+    )
+  }
+
   if (authMode) {
     return (
       <Auth
         initialMode={authMode}
         onBack={() => setAuthMode(null)}
+        onAuthenticated={setCurrentUser}
       />
     )
   }
 
   return (
     <div className="app">
-      {/* Navigation */}
       <nav className="navbar">
-        <a href="#home" className="logo">
-          🌱 PerishLink
-        </a>
+        <a href="#home" className="logo">🌱 PerishLink</a>
 
         <div className="nav-links">
           <a href="#home">Home</a>
@@ -49,7 +123,6 @@ function App() {
         </div>
       </nav>
 
-      {/* Hero Section */}
       <section className="hero" id="home">
         <div className="hero-content">
           <span className="hero-tag">
@@ -57,10 +130,8 @@ function App() {
           </span>
 
           <h1>
-            Good Food.
-            <br />
-            <span>Zero Waste.</span>
-            <br />
+            Good Food.<br />
+            <span>Zero Waste.</span><br />
             Better Tomorrow.
           </h1>
 
@@ -96,7 +167,6 @@ function App() {
         </div>
       </section>
 
-      {/* Impact Section */}
       <section className="impact-section" id="impact">
         <div className="section-heading">
           <span>OUR IMPACT</span>
@@ -112,17 +182,14 @@ function App() {
             <h2>2,500+</h2>
             <p>Meals Rescued</p>
           </div>
-
           <div className="stat-card">
             <h2>150+</h2>
             <p>Food Donors</p>
           </div>
-
           <div className="stat-card">
             <h2>80+</h2>
             <p>Partner Shelters</p>
           </div>
-
           <div className="stat-card">
             <h2>500+</h2>
             <p>Volunteers</p>
@@ -130,7 +197,6 @@ function App() {
         </div>
       </section>
 
-      {/* How It Works */}
       <section className="how-section" id="how-it-works">
         <div className="section-heading">
           <span>HOW IT WORKS</span>
@@ -171,14 +237,12 @@ function App() {
         </div>
       </section>
 
-      {/* Call To Action */}
       <section className="cta-section" id="donate">
         <h2>Be Part of the Food Rescue Movement</h2>
         <p>
           Your contribution can help reduce food waste and
           feed communities.
         </p>
-
         <button
           className="cta-button"
           onClick={() => setAuthMode('register')}
@@ -187,16 +251,9 @@ function App() {
         </button>
       </section>
 
-      {/* Footer */}
       <footer className="footer">
-        <a href="#home" className="logo">
-          🌱 PerishLink
-        </a>
-
-        <p>
-          Connecting surplus food with those who need it.
-        </p>
-
+        <a href="#home" className="logo">🌱 PerishLink</a>
+        <p>Connecting surplus food with those who need it.</p>
         <p className="copyright">
           © {new Date().getFullYear()} PerishLink. All rights reserved.
         </p>
